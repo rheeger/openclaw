@@ -99,7 +99,7 @@ export function createOperatorChatSendServerTiming(params: {
   };
   return {
     emit,
-    emitFirstAssistant() {
+    emitFirstAssistant: () => {
       if (firstAssistantEventSent || params.chatSendTiming?.firstAssistantEventSent) {
         return;
       }
