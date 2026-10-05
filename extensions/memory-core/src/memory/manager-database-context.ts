@@ -47,7 +47,7 @@ import type { MemorySourceIndexReplacement } from "./manager-source-index-kernel
 
 type PublicationScope = Pick<SqliteWorkerStore<MemoryPublicationOperations>, "execute">;
 type PublicationWorker = {
-  store: OpenClawAgentSqliteWorkerStore<MemoryPublicationOperations>;
+  store: Pick<OpenClawAgentSqliteWorkerStore<MemoryPublicationOperations>, "run" | "close">;
   busyTimeoutMs: number;
 };
 
