@@ -34,7 +34,6 @@ import {
   createReplyAgentRestartRecoveryController,
   executePreparedReplyAgentRun,
 } from "./agent-runner-execute.js";
-import { resolveReplySteeringAuthority } from "./agent-runner-fallback-authority.js";
 import {
   createShouldEmitToolOutput,
   createShouldEmitToolResult,
@@ -220,16 +219,8 @@ export async function runReplyAgent(
   const effectiveShouldFollowup = !effectiveResetTriggered && shouldFollowup;
   const messageInjectionDisposition = opts?.messageInjectionDisposition ?? "none";
   const activeReplyOperation = sessionKey
-    ? (replyRunRegistry.get(sessionKey) ?? providedReplyOperation)
+    ? replyRunRegistry.get(sessionKey)
     : providedReplyOperation;
-  const steeringAuthority = resolveReplySteeringAuthority(followupRun, activeReplyOperation);
-  const shouldQueueAuthorityMismatch =
-    effectiveShouldSteer && isActive && steeringAuthority.shouldQueueAuthorityMismatch;
-  if (shouldQueueAuthorityMismatch) {
-    logVerbose(
-      `queue: active session ${activeReplyOperation?.sessionId ?? followupRun.run.sessionId} has different or unknown tool authority; queuing instead of steering`,
-    );
-  }
   const typingSignals = createTypingSignaler({
     typing,
     mode: typingMode,
@@ -250,7 +241,6 @@ export async function runReplyAgent(
   const shouldQueueTerminalReceiptSteer =
     effectiveShouldSteer &&
     isActive &&
-    !shouldQueueAuthorityMismatch &&
     messageInjectionDisposition === "none" &&
     terminalDeliveryBlockReason !== undefined;
   if (shouldQueueTerminalReceiptSteer) {
@@ -340,7 +330,6 @@ export async function runReplyAgent(
   if (
     effectiveShouldSteer &&
     isActive &&
-    !shouldQueueAuthorityMismatch &&
     !shouldQueueTerminalReceiptSteer &&
     messageInjectionDisposition === "none"
   ) {
@@ -362,9 +351,6 @@ export async function runReplyAgent(
       touchActiveSessionEntry,
       typing,
       typingSignals,
-      toolAuthorityFingerprint: steeringAuthority.toolAuthorityFingerprint,
-      automaticFallbackRoute: steeringAuthority.automaticFallbackRoute,
-      pendingInputAuthorityFingerprint: steeringAuthority.pendingInputAuthorityFingerprint,
     });
     return result === "handled" ? undefined : result;
   }
@@ -373,7 +359,7 @@ export async function runReplyAgent(
     hasQueuedFollowups,
     isActive,
     isHeartbeat,
-    shouldFollowup: effectiveShouldFollowup || shouldQueueAuthorityMismatch,
+    shouldFollowup: effectiveShouldFollowup,
     resetTriggered: effectiveResetTriggered,
   });
   if (activeRunQueueAction === "drop") {

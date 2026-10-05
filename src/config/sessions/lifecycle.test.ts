@@ -125,23 +125,13 @@ describe("terminal main session transcript freshness", () => {
     expect(check(entry, sessionKey)).toBe(false);
   });
 
-  it("rotates endedAt-only main sessions after a later transcript mutation", async () => {
+  it("keeps a yielded main session reusable after a child transcript admission", async () => {
     const { entry, sessionKey } = await createEntry({
       endedAt: Date.now() - 20_000,
       updatedAt: Date.now() - 10_000,
     });
 
     expect(entry.status).toBeUndefined();
-    expect(check(entry, sessionKey)).toBe(true);
-  });
-
-  it("keeps a yielded main session reusable after a child transcript admission", async () => {
-    const { entry, sessionKey } = await createEntry({
-      status: "done",
-      endedAt: Date.now() - 20_000,
-      updatedAt: Date.now() - 10_000,
-    });
-
     expect(entry.endedAt).toBeDefined();
     expect(check(entry, sessionKey)).toBe(false);
   });

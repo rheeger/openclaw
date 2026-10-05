@@ -178,10 +178,7 @@ function resolveTerminalMainSessionTranscriptRegistryCheck(
   if (candidateSessionKey !== configuredMainSessionKey) {
     return undefined;
   }
-  const hasTerminalLifecycle =
-    isTerminalSessionStatus(params.entry.status) ||
-    resolvePositiveTimestamp(params.entry.endedAt) !== undefined;
-  if (!hasTerminalLifecycle) {
+  if (!isTerminalSessionStatus(params.entry.status)) {
     return undefined;
   }
   if (params.entry.status === "done") {

@@ -1,7 +1,6 @@
 import { asOptionalObjectRecord } from "@openclaw/normalization-core/record-coerce";
 import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
 import type { InternalSessionEntry as SessionEntry } from "../../config/sessions.js";
-import { buildRestartRecoveryClaimCleanupPatch } from "../../config/sessions/restart-recovery-state.js";
 import {
   applySessionEntryReplacements,
   persistSessionTranscriptTurn,
@@ -17,7 +16,7 @@ import {
   isTerminalSilentAssistantMessage,
   readTerminalSourceReplyDeliveryMirror,
 } from "../embedded-agent-runner/message-visibility.js";
-import { buildMainSessionRecoveryClearPatch } from "./main-session-recovery-clear.js";
+import { buildMainSessionRecoverySettlementPatch } from "./main-session-recovery-clear.js";
 import type { MainSessionRecoveryStoreTarget } from "./main-session-recovery-store.js";
 import { isRestartAbortTailArtifact } from "./main-session-restart-recovery-resume-policy.js";
 import {
@@ -50,12 +49,10 @@ export async function reconcileInvalidHarnessCompletion(
       didReconcile = true;
       const endedAt = Date.now();
       return {
-        ...buildRestartRecoveryClaimCleanupPatch({ entry, recordTerminalSource: false }),
-        ...buildMainSessionRecoveryClearPatch(entry),
+        ...buildMainSessionRecoverySettlementPatch({ entry, recordTerminalSource: false }),
         status: "killed",
         lifecycleRunId: undefined,
         lastRunId: resolveRestartRecoveryTerminalClientRunId(entry),
-        abortedLastRun: false,
         endedAt,
         lastRunError: undefined,
         runtimeMs:
@@ -215,21 +212,17 @@ export async function markSessionCompletedAfterRecoveryCheckpoint(params: {
     isTerminalSessionStatus(params.entry.status) && params.entry.status !== "interrupted";
   const endedAt = settled ? (params.entry.endedAt ?? Date.now()) : Date.now();
   const lifecyclePatch: SessionTranscriptTurnLifecyclePatch = {
-    ...buildRestartRecoveryClaimCleanupPatch({
+    ...buildMainSessionRecoverySettlementPatch({
       entry: params.entry,
       recordTerminalSource: expectedRecoverySourceRunId !== undefined,
       terminalSourceRunId: expectedRecoverySourceRunId,
     }),
-    abortedLastRun: false,
     lifecycleRunId: undefined,
     lastRunId: settled
       ? params.entry.lastRunId
       : resolveRestartRecoveryTerminalClientRunId(params.entry),
     endedAt,
     pendingFinalDelivery: undefined,
-    restartRecoveryForceSafeTools: undefined,
-    restartRecoveryRuns: undefined,
-    ...buildMainSessionRecoveryClearPatch(params.entry),
     runtimeMs:
       typeof params.entry.startedAt === "number"
         ? Math.max(0, endedAt - params.entry.startedAt)

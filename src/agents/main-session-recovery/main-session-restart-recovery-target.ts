@@ -66,6 +66,7 @@ export function captureYieldedMainSessionContinuation(
 ): (() => boolean) | undefined {
   // A prepared final may not have reached its queue yet; main recovery still owns that debt.
   if (
+    params.entry.status !== undefined ||
     params.entry.pendingFinalDelivery !== undefined ||
     asFiniteNumber(params.entry.endedAt) === undefined
   ) {

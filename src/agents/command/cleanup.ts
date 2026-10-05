@@ -1,5 +1,4 @@
 import { coerceErrorMessage } from "@openclaw/normalization-core/error-coercion";
-import { buildRestartRecoveryClaimCleanupPatch } from "../../config/sessions/restart-recovery-state.js";
 import type { RestartRecoveryTerminalDeliveryEvidenceResult } from "../../config/sessions/restart-recovery-types.js";
 import type { SessionEntry } from "../../config/sessions/types.js";
 import { getAgentEventLifecycleGeneration } from "../../infra/agent-events.js";
@@ -8,7 +7,7 @@ import { createSubsystemLogger } from "../../logging/subsystem.js";
 import type { SessionWorkAdmissionLease } from "../../sessions/session-lifecycle-admission.js";
 import type { prepareAgentCommandExecutionIdentity } from "../agent-command-execution-identity.js";
 import { shouldPersistRestartRecoveryCleanup } from "../agent-command-restart-recovery.js";
-import { buildMainSessionRecoveryClearPatch } from "../main-session-recovery/main-session-recovery-clear.js";
+import { buildMainSessionRecoverySettlementPatch } from "../main-session-recovery/main-session-recovery-clear.js";
 import { inspectMainSessionRecoveryLifecycleEvent } from "../main-session-recovery/main-session-recovery-lifecycle.js";
 import { createAgentRunRestartAbortError } from "../run-termination.js";
 import { persistAgentSession } from "./attempt-execution.shared.js";
@@ -70,13 +69,12 @@ export async function finishAgentCommandCleanup(params: {
           initialEntry: entry,
           entry: {
             ...entry,
-            ...buildRestartRecoveryClaimCleanupPatch({
+            ...buildMainSessionRecoverySettlementPatch({
               entry,
               recordTerminalSource: true,
               terminalRunId: runId,
               terminalDeliveryEvidence: params.terminalDeliveryEvidence,
             }),
-            ...buildMainSessionRecoveryClearPatch(entry),
             updatedAt: Date.now(),
           },
           assertCommitAllowed: () => {

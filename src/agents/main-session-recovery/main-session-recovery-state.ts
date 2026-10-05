@@ -8,7 +8,6 @@ import type {
   RestartRecoveryRun,
 } from "../../config/sessions.js";
 import {
-  buildRestartRecoveryClaimCleanupPatch,
   hasMainSessionRecoveryClaim,
   isMainRestartRecoveryCandidate,
   hasRestartRecoveryTerminalRun,
@@ -18,6 +17,7 @@ import { isTerminalSessionStatus } from "../../config/sessions/types.js";
 import { interruptAdmittedMainSessionRecovery } from "./main-session-recovery-admitted-interruption.js";
 import {
   buildMainSessionRecoveryClearPatch,
+  buildMainSessionRecoverySettlementPatch,
   removeMainSessionRecoveryForegroundClaim,
 } from "./main-session-recovery-clear.js";
 import type {
@@ -304,9 +304,14 @@ export function transitionMainSessionRecovery(
     case "mark_interrupted": {
       const startedAt = entry.lifecycleRunId ? entry.startedAt : undefined;
       const preserveOutcome =
-        isTerminalSessionStatus(entry.status) &&
-        entry.status !== "interrupted" &&
-        Boolean(entry.restartRecoveryDeliveryRunId || entry.pendingFinalDelivery);
+        (entry.status === undefined && entry.endedAt !== undefined) ||
+        (isTerminalSessionStatus(entry.status) &&
+          entry.status !== "interrupted" &&
+          Boolean(entry.restartRecoveryDeliveryRunId || entry.pendingFinalDelivery));
+      // Queued announcements add fences too. Retain the executing turn before
+      // releasing its lifecycle identity so retries can join this recovery.
+      entry.restartRecoveryDeliverySourceRunId ??=
+        entry.restartRecoveryDeliveryRunId ?? entry.lifecycleRunId;
       const state = entry.mainRestartRecovery;
       if (!state) {
         entry.mainRestartRecovery = createCycle(command.cycleId);
@@ -392,8 +397,7 @@ export function transitionMainSessionRecovery(
       ) {
         Object.assign(
           entry,
-          buildRestartRecoveryClaimCleanupPatch({ entry, recordTerminalSource: true }),
-          buildMainSessionRecoveryClearPatch(entry),
+          buildMainSessionRecoverySettlementPatch({ entry, recordTerminalSource: true }),
         );
       }
       return {

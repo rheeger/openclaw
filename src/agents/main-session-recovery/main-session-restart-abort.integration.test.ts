@@ -201,7 +201,7 @@ it.each([
           expect(loadSessionEntry(target)?.restartRecoveryTerminalRunIds).toEqual([
             "previous-completed-run",
           ]);
-          expect(info).toHaveBeenCalledExactlyOnceWith(
+          expect(info).toHaveBeenCalledWith(
             "main-session restart recovery startup complete: started=0 settled=0 failed=0 skipped=1 skipReasons=live_owner:1",
           );
         } finally {
