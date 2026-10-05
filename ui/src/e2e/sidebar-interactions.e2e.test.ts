@@ -573,6 +573,41 @@ suite.define(() => {
       await expect
         .poll(() => researchSwitch.evaluate((element) => element === document.activeElement))
         .toBe(true);
+      const researchPin = researchSwitch.getByRole("button");
+      await page.keyboard.press("Tab");
+      await expect
+        .poll(() => researchPin.evaluate((element) => element === document.activeElement))
+        .toBe(true);
+      await page.keyboard.press("Space");
+      await expect.poll(() => researchPin.getAttribute("aria-pressed")).toBe("true");
+      await expect
+        .poll(() => researchPin.evaluate((element) => element === document.activeElement))
+        .toBe(true);
+      expect(new URL(page.url()).pathname).toBe(controlUiSessionPath("agent:main:main"));
+      expect(await menu.isVisible()).toBe(true);
+      await page.keyboard.press("ArrowDown");
+      await expect
+        .poll(() => mainSwitch.evaluate((element) => element === document.activeElement))
+        .toBe(true);
+      await researchSwitch.focus();
+      await page.keyboard.press("Tab");
+      await page.keyboard.press("Enter");
+      await expect.poll(() => researchPin.getAttribute("aria-pressed")).toBe("false");
+      await page.keyboard.press("Shift+Tab");
+      await expect
+        .poll(() => researchSwitch.evaluate((element) => element === document.activeElement))
+        .toBe(true);
+      await researchSwitch.hover();
+      await researchPin.click();
+      await expect.poll(() => researchPin.getAttribute("aria-pressed")).toBe("true");
+      await page.keyboard.press("Escape");
+      await page.reload();
+      await sidebar.getByRole("button", { name: /Switch agent/ }).click();
+      await expect.poll(() => researchPin.getAttribute("aria-pressed")).toBe("true");
+      await researchSwitch.hover();
+      await researchPin.click();
+      await expect.poll(() => researchPin.getAttribute("aria-pressed")).toBe("false");
+      await researchSwitch.focus();
       await captureSidebarUiProof(suite, page, "agent-menu-without-new-session-rows.png");
       await page.keyboard.press("Enter");
       await expect

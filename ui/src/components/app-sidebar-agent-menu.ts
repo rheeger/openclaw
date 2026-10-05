@@ -109,7 +109,10 @@ export function moveSidebarMenuFocus(event: KeyboardEvent): boolean {
     ...items,
     ...(footer?.querySelectorAll<HTMLElement>("a[href], button:not([disabled])") ?? []),
   ];
-  const current = event.target instanceof HTMLElement ? event.target : null;
+  const current =
+    event.target instanceof HTMLElement
+      ? (event.target.closest<HTMLElement>("wa-dropdown-item") ?? event.target)
+      : null;
   const index = current ? controls.indexOf(current) : -1;
   if (footer && index < 0) {
     return false;

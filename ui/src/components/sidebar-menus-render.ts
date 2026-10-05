@@ -2,6 +2,7 @@ import { html, nothing } from "lit";
 import { keyed } from "lit/directives/keyed.js";
 import { DEFAULT_SIDEBAR_ENTRIES, serializeSidebarEntry } from "../app-navigation.ts";
 import { pathForRoute } from "../app-route-paths.ts";
+import { togglePinnedAgent } from "../app/bootstrap-navigation-preferences.ts";
 import { gatewayPresentationScope } from "../app/gateway-presentation-scope.ts";
 import { isMobileNavLayout } from "../app/mobile-nav-layout.ts";
 import { patchSettings } from "../app/settings.ts";
@@ -115,6 +116,12 @@ export function renderSidebarAgentMenuForController(controller: SidebarMenusCont
     agents,
     identities,
     pinnedAgentIds: host.pinnedAgentIds,
+    onTogglePinnedAgent: async (agentId) => {
+      if (host.sessionDataContext) {
+        togglePinnedAgent(host.sessionDataContext.navigation, agentId);
+        await host.updateComplete;
+      }
+    },
     query: controller.agentMenuQuery,
     onQueryChange: (query) => controller.setAgentMenuQuery(query),
     rosterMode: host.sidebarAgentsMode === "roster",
